@@ -1,0 +1,6 @@
+# vkauth: who had an account at the last check (used to find deleted accounts for RankVK). Do not edit.
+
+mode: name
+accounts:
+- id: benyvk
+  name: BenyVK

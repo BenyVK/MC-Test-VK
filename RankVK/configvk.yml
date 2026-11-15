@@ -1,0 +1,354 @@
+# ============================================================================
+#   RankVK  -  configvk.yml Create By BenyVK (Github)
+# ============================================================================
+
+#  STORAGE
+
+# Where groups and players are saved.
+#
+#   json     files in plugins/RankVK/json/      (default, no setup needed)
+#   yaml     files in plugins/RankVK/yaml/      (easy to edit by hand)
+#   sqlite   one file: plugins/RankVK/rankvk.db (fast, no server needed)
+#   mysql    a MySQL server    \  share the same ranks between several
+#   mariadb  a MariaDB server  /  servers (BungeeCord / Velocity networks)
+#
+# HOW TO SWITCH WITHOUT LOSING DATA:
+#   1. run  /rank migrate <method>   (copies everything to the new storage)
+#   2. change storage-method below
+#   3. run  /rank reload
+storage-method: mysql
+
+# Settings for sqlite / mysql / mariadb (ignored for json and yaml).
+# Changing the address, username or password needs a server restart.
+data:
+  address: 127.0.0.1:3306       # host or host:port
+  database: benyvk              # the database must already exist
+  username: root
+  password: ""
+  table-prefix: players
+  sqlite-file: rankvk.db        # used when storage-method is sqlite
+
+  # Connection pool (mysql / mariadb)
+  pool-settings:
+    maximum-pool-size: 8
+    minimum-idle: 2
+    maximum-lifetime: 1800000   # ms
+    keepalive-time: 0           # ms, 0 = off
+    connection-timeout: 5000    # ms
+
+  # Extra JDBC properties (mysql / mariadb)
+  properties:
+    useUnicode: true
+    characterEncoding: utf8
+    # useSSL: false
+    # allowPublicKeyRetrieval: true
+
+
+#  LINK WITH vkauth  (the login plugin)
+
+# online-authvk
+#   true  = RankVK follows vkauth: when an account is deleted in vkauth, the RankVK data of that
+#           player (permissions, prefix, suffix) is deleted as well, so nothing is left behind.
+#   false = RankVK ignores what vkauth does.
+# (vkauth has its own switch, online-rankvk, in its configvk.yml. Both must be true for this to work.)
+online-authvk: true
+
+# match-signalVK
+#   false = RankVK keeps its own tables (default).
+#   true  = RankVK and vkauth keep the player in ONE row of ONE table (match-table) of the SAME mysql / mariadb
+#           database: login data and rank data side by side, e.g. database "minecraft", table "players".
+#           It only turns on when BOTH configvk.yml files say match-signalVK: true and contain the
+#           same database (host, port, database) and the same match-table. If they differ, RankVK keeps
+#           its own tables and prints the reason in the console.
+#           Needs storage-method mysql or mariadb. Players already stored by RankVK are copied into the
+#           shared table once (the old table is renamed to <prefix>users_migrated).
+#           The permissions of every player stay in <table-prefix>user_nodes, linked by uuid.
+match-signalVK: true
+match-table: players_shared
+
+#  SYNCING (several servers sharing one mysql / mariadb database)
+# Every N minutes, reload groups and online players from storage so changes
+# made on another server show up. 0 = off. You can force it with /rank sync.
+sync-minutes: 3
+
+#  PERMISSIONS
+
+# Every player inherits this group automatically.
+default-group: default
+
+# Let "*" and "plugin.*" grant every matching permission.
+apply-wildcards: true
+
+
+#  PLUGIN-WIDE ACCESS
+
+# A node like  plugin:essentials  allows or denies EVERY command of that plugin at once.
+# Vanilla commands belong to the plugin "minecraft", so  plugin:minecraft  covers all of them.
+# Priority: a single command node (minecraft.command.gamemode) > plugin:<name> > wildcards (*).
+#   /rank user <player> plugin deny minecraft            (close all vanilla commands for one player)
+#   /rank user <player> permission set /gamemode true    (...then open just one of them)
+#   /rank group <group> plugin allow essentials
+plugin-access:
+  # Commands that have no permission at all cannot be stopped by a node, so RankVK also blocks them
+  # when their plugin is denied.
+  block-unprotected-commands: true
+
+
+#  CHAT
+
+# Placeholders: {prefix} {name} {suffix} {message}   Colours: &a &c &l ...
+chat:
+  enabled: true
+  format: "{prefix}{name}{suffix}&7: &f{message}"
+
+
+#  WEB EDITOR  (open it in game with /rank editor)
+
+# Changes made on the website are NOT applied directly. The site gives you a
+# one-time code; run  /rank applyedits <code>  in game to apply them.
+web:
+  enabled: true
+  # "127.0.0.1" = only this machine / a reverse proxy on it (safe default).
+  # Use "0.0.0.0" only together with the HTTPS keystore below: over plain HTTP the
+  # login token can be read by anyone on the network path.
+  bind: "127.0.0.1"
+  port: 8080
+  # Address you type in the browser (IP or domain). Example: "https://rank.example.com"
+  public-url: "http://localhost:8080"
+
+  # Player pictures in the editor. The server downloads the head (the skin of online players, else the
+  # providers below, tried in order) and hands it to your browser, so the page never contacts other sites.
+  # {id} = UUID on online-mode servers, the player name on offline-mode servers. {name} and {uuid} also work.
+  avatars:
+    enabled: true
+    debug: false   # true = print in the console why a head could not be loaded (then reload with /rank reload)
+    # Cracked / TLauncher players: their skin lives on TLauncher's servers, so the server asks them
+    # (by nickname). On offline-mode servers this is tried before the providers below.
+    tlauncher:
+      enabled: true
+      profile-url: "https://auth.tlauncher.org/skin/profile/texture/login/{name}"
+      skin-url: "https://auth.tlauncher.org/skin/fileservice/skins/skin_{name}.png"
+    providers:
+      - "https://mc-heads.net/avatar/{id}/64"
+      - "https://minotar.net/helm/{id}/64"
+      - "https://crafatar.com/avatars/{uuid}?size=64&overlay"
+
+  code-ttl-minutes: 10      # how long an apply code stays valid
+  require-same-admin: true  # only the admin who opened the editor can apply its codes
+  # true ONLY if a reverse proxy that you control sets X-Forwarded-For (the last address
+  # in that header is used). With true and no proxy, anyone can fake their IP and
+  # bypass the failed-login limit.
+  behind-proxy: false
+
+  # Optional built-in HTTPS. Put a .p12 / .jks file inside plugins/RankVK/ and fill these in.
+  # Without it the editor uses plain HTTP, so put it behind an HTTPS reverse proxy.
+  ssl:
+    keystore: ""
+    password: ""
+
+
+#  BACKUPS  (full copy of all ranks as json or yaml files)
+
+# Saved in plugins/RankVK/backups/. You can also run /rank backup at any time.
+backup:
+  enabled: true
+  interval-hours: 24
+  format: json              # json or yaml
+  keep: 14                  # how many backups to keep, older ones are deleted
+
+
+#  LOGGING
+
+audit:
+  log-file: true            # write every change to plugins/RankVK/changes.log
+  notify-in-game: true      # tell online admins (rankvk.notify) about changes
+
+# @@LOOK-AND-MESSAGES@@  (do not delete this line: it lets RankVK add this section to an old config)
+# ============================================================================
+#  LOOK  (colours and symbols used by every message)
+# ============================================================================
+# Colours: &a &c &l ... and hex colours like &#00A693.
+# Inside any message you can use:  {main} {error} {warn} {text} {hi} {dim}
+#                                  {prefix} {add} {remove} {change}
+theme:
+  main: "&#00A693"          # Persian green
+  error: "&#E5484D"
+  warn: "&#F5C542"
+  text: "&7"
+  hi: "&f"
+  dim: "&8"
+  prefix: "{main}&lRankVK {dim}» {text}"
+  add: "&f[{main}+&f]"      # shown when something is added / allowed
+  remove: "&f[{error}-&f]"  # shown when something is removed / denied
+  change: "&f[{warn}~&f]"   # shown when something is changed
+
+# ============================================================================
+#  MESSAGES  (game chat and console, edit freely)
+# ============================================================================
+# Words in {braces} are filled in by RankVK, keep them. Remove {prefix} to hide the prefix.
+messages:
+  no-permission: "{prefix}{error}You don't have permission to use this command."
+  reloaded: "{prefix}{add} {main}Reloaded {hi}configvk.yml"
+
+  help:
+    - "{prefix}{main}Commands"
+    - " {main}/rank editor {dim}- {text}open the web editor {dim}(add {hi}revoke{dim} to kill all sessions)"
+    - " {main}/rank applyedits <code> {dim}- {text}apply changes made in the web editor"
+    - " {main}/rank listgroups"
+    - " {main}/rank group <name> {hi}create|delete|info"
+    - " {main}/rank group <name> permission {hi}set|unset|check {dim}<node> [true|false] [duration] [world=<w>]"
+    - " {main}/rank group <name> parent {hi}add|remove|set {dim}<group>"
+    - " {main}/rank group <name> {hi}setweight <n> | setprefix <text|none> | setsuffix <text|none>"
+    - " {main}/rank user <player> {hi}info"
+    - " {main}/rank user <player> permission {hi}set|unset|check {dim}<node> [true|false] [duration] [world=<w>]"
+    - " {dim}  check shows exactly WHY a permission is allowed or denied"
+    - " {main}/rank user <player> plugin {hi}allow|deny|unset|check {dim}<plugin> [duration] [world=<w>]"
+    - " {dim}  a plugin means all its commands at once; use {hi}minecraft{dim} for every vanilla command"
+    - " {main}/rank group <name> plugin {hi}allow|deny|unset|check {dim}<plugin>"
+    - " {main}/rank plugins {dim}[plugin] - {text}list plugins and their commands"
+    - " {main}/rank user <player> parent {hi}add|remove|set {dim}<group>  (set replaces all other parents)"
+    - " {main}/rank user <player> {hi}setprefix|setsuffix <text|none>"
+    - " {main}/rank storage {dim}- {text}show the active storage"
+    - " {main}/rank sync {dim}- {text}reload everything from storage now"
+    - " {main}/rank migrate <json|yaml|sqlite|mysql|mariadb> {dim}- {text}copy all data to another storage"
+    - " {main}/rank backup [json|yaml] {dim}- {text}save a snapshot into plugins/RankVK/backups"
+    - " {main}/rank reload {dim}- {text}reload configvk.yml"
+
+  groups-header: "{prefix}{main}Groups {dim}({hi}{count}{dim})"
+  plugins-header: "{prefix}{main}Plugins with commands {dim}({hi}{count}{dim})"
+  plugins-line: " {dim}• {hi}{name} {dim}(plugin:{text}{key}{dim}, {text}{count}{dim} commands)"
+  plugins-commands: "{prefix}{hi}{plugin} {dim}({text}{count}{dim} commands){main}: {text}{list}"
+  plugin-unknown: "{prefix}{error}No plugin named {hi}{plugin}{error} owns commands. See {hi}/rank plugins"
+  plugin-set: "{prefix}{add} {main}Set all {text}{count} {main}commands of {hi}{plugin} {main}to {state_raw}{temp_raw}"
+  plugin-removed: "{prefix}{remove} {main}Removed the plugin-wide setting for {hi}{plugin}"
+  plugin-not-found: "{prefix}{warn}There was no plugin-wide setting for {hi}{plugin}"
+  plugin-check: "{prefix}{text}Plugin-wide access to {hi}{plugin}{dim}: {state_raw}"
+  plugin-blocked: "{prefix}{error}All commands of {hi}{plugin}{error} are closed for you."
+
+  groups-line: " {dim}• {hi}{name} {dim}(weight {text}{weight}{dim})"
+
+  editor-disabled: "{prefix}{error}The web editor is disabled or failed to start. Check configvk.yml and the console."
+  editor-revoked: "{prefix}{remove} {error}All web editor sessions and pending codes were revoked."
+  editor-link: "{prefix}{add} {main}Click here to open the web editor"
+  editor-link-console: "{prefix}{main}Web editor link: {hi}{url}"
+  command-blocked: "{prefix}{error}You are not allowed to use {hi}/{command}"
+  editor-note: "{prefix}Link valid for 30 minutes, for you only. After saving in the browser run {hi}/rank applyedits <code>"
+
+  applyedits-disabled: "{prefix}{error}The web editor is disabled."
+  applyedits-usage: "{prefix}{error}Usage: {hi}/rank applyedits <code>"
+  applyedits-error: "{prefix}{error}{reason}"
+  applyedits-failed: "{prefix}{error}Could not apply: {hi}{reason}"
+  applyedits-nothing: "{prefix}{main}Nothing to change, everything was already up to date."
+  applyedits-header: "{prefix}{main}Applied {hi}{count} {main}change(s)"
+  applyedits-more: " {dim}...and {hi}{count} {dim}more"
+
+  sync-start: "{prefix}Reloading groups and online players from storage..."
+  sync-done: "{prefix}{add} {main}Sync finished. Changes are applied now."
+  sync-failed: "{prefix}{error}Sync failed: {hi}{reason}"
+
+  storage-info: "{prefix}{text}Storage {hi}{storage} {dim}| {text}groups {hi}{groups} {dim}| {text}sync every {hi}{minutes} {text}min"
+
+  migrate-usage: "{prefix}{error}Usage: {hi}/rank migrate <json|yaml|sqlite|mysql|mariadb>"
+  migrate-same: "{prefix}{error}That is already the active storage. Pick a different one."
+  migrate-start: "{prefix}Copying all data to {hi}{type}{text}. This can take a moment..."
+  migrate-open-failed: "{prefix}{error}Could not open {hi}{type}{error}: {reason}"
+  migrate-done: "{prefix}{add} {main}Copied {hi}{groups} {main}groups and {hi}{users} {main}players{failed_raw}{dim}. {text}To use it, set {hi}storage-method: {type} {text}in configvk.yml and run {hi}/rank reload"
+  migrate-failed-part: " {error}({failed} failed)"
+  migrate-failed: "{prefix}{error}Migration failed: {hi}{reason}"
+
+  backup-start: "{prefix}Creating a {hi}{format} {text}backup..."
+  backup-done: "{prefix}{add} {main}Backup saved to {hi}plugins/RankVK/backups/{name}"
+  backup-failed: "{prefix}{error}Backup failed: {hi}{reason}"
+
+  user-unknown: "{prefix}{error}Unknown player. They must have joined the server at least once."
+
+  group-invalid-name: "{prefix}{error}Invalid name. Use a-z, 0-9, _ and - (max 32)."
+  group-exists: "{prefix}{error}That group already exists."
+  group-created: "{prefix}{add} {main}Group {hi}{name} {main}created"
+  group-deleted: "{prefix}{remove} {error}Group {hi}{name} {error}deleted"
+  group-delete-failed: "{prefix}{error}Cannot delete {hi}{name} {error}(missing, or it is the default group)."
+  group-not-found: "{prefix}{error}Group not found."
+
+  prefix-updated: "{prefix}{change} {main}Prefix updated"
+  suffix-updated: "{prefix}{change} {main}Suffix updated"
+  weight-invalid: "{prefix}{error}Weight must be a number."
+  weight-updated: "{prefix}{change} {main}Weight updated"
+
+  info-header-group: "{prefix}{main}{name} {dim}(group, weight {hi}{weight}{dim})"
+  info-header-user: "{prefix}{main}{name} {dim}(player)"
+  info-meta: " {text}Prefix{dim}: {hi}{prefix_raw} {dim}| {text}Suffix{dim}: {hi}{suffix_raw}"
+  info-empty: " {dim}no permissions set"
+  info-allow: " {add} {hi}{node}{extra_raw}"
+  info-deny: " {remove} {hi}{node}{extra_raw}"
+  info-op: "{prefix}{warn}{player} is an operator. Operators bypass denied permissions, run {hi}/deop {player}{warn} to let RankVK decide."
+
+  perm-too-long: "{prefix}{error}Permission nodes can be at most 200 characters."
+  perm-bad-duration: "{prefix}{error}Invalid argument {hi}{arg} {error}(use e.g. 1d12h30m)"
+  perm-set: "{prefix}{add} {main}Set {hi}{node} {main}to {state_raw}{temp_raw}"
+  perm-removed: "{prefix}{remove} {error}Removed {hi}{node}"
+  perm-not-found: "{prefix}{error}Node not found."
+
+  check-command: "{prefix}{hi}{node} {text}is a command, its permission is {hi}{key}"
+  check-result: "{prefix}{hi}{key} {dim}= {state_raw}"
+  check-none: " {dim}no node, group or wildcard matches this permission"
+  check-live: "{prefix}{text}Right now in game {hi}{player} {text}has it{dim}: {state_raw}"
+  check-op: "{prefix}{warn}{player} is an operator. Operators bypass denied permissions, run {hi}/deop {player} {warn}first."
+  explain-win: " {warn}»» {hi}{who} {dim}→ {state_raw} {text}via {hi}{via}{extra_raw}"
+  explain-other: "    {dim}{who} → {state_raw} {dim}via {via}{extra_raw}"
+
+  parent-loop: "{prefix}{error}That would create an inheritance loop."
+  parent-added: "{prefix}{add} {main}Parent {hi}{group} {main}added"
+  parent-set: "{prefix}{change} {main}Parent is now only {hi}{group}"
+  parent-removed: "{prefix}{remove} {error}Parent {hi}{group} {error}removed"
+  parent-not-parent: "{prefix}{error}That group is not a parent."
+
+  # small pieces reused by the messages above
+  state-true: "{main}true"
+  state-false: "{error}false"
+  state-unset: "{dim}not set explicitly"
+  extra-temporary: " {dim}(temporary)"
+  extra-world: " {dim}[world {world}]"
+  extra-expires: " {dim}[expires {date}]"
+  none: "-"
+
+  # lines shown after /rank applyedits (and written to changes.log without colours)
+  label-group: "{text}group {hi}{name}"
+  label-player: "{text}player {hi}{name}"
+  diff-group-add: "{add} {text}group {hi}{name} {text}created"
+  diff-group-remove: "{remove} {text}group {hi}{name} {text}deleted"
+  diff-add: "{add} {label_raw}{dim}: {hi}{node} {dim}= {state_raw}{extra_raw}"
+  diff-remove: "{remove} {label_raw}{dim}: {hi}{node} {dim}= {state_raw}{extra_raw}"
+  diff-prefix: "{change} {label_raw}{dim}: {hi}prefix changed"
+  diff-suffix: "{change} {label_raw}{dim}: {hi}suffix changed"
+  diff-weight: "{change} {label_raw}{dim}: {hi}weight {from} → {to}"
+
+  # audit: console, changes.log (colours removed) and admins with rankvk.notify
+  audit-console: "{prefix}{dim}[audit] {text}{line}"
+  audit-notify: "{prefix}{text}{line}"
+  audit-editor-opened: "{who} opened the web editor"
+  audit-editor-revoked: "{who} revoked all web editor sessions"
+  audit-applied: "{who} applied web edits {code} ({count} changes): {changes}"
+  audit-change: "{who} changed {target}: {what}"
+  audit-group-created: "{who} created group {name}"
+  audit-group-deleted: "{who} deleted group {name}"
+  audit-web-staged: "web editor: edits staged by {who} from IP {ip} (code {code})"
+
+  # console / log
+  log-storage-failed: "{prefix}{error}Could not start storage {hi}{method}{error}: {reason}"
+  log-storage-hint: "{prefix}{error}Fix {hi}storage-method{error} / {hi}data{error} in plugins/RankVK/configvk.yml and restart the server."
+  log-ready: "{prefix}{add} {main}v{version} enabled {dim}· {text}storage {hi}{storage} {dim}· {text}groups {hi}{groups} {dim}· {text}web {hi}{web}"
+  log-vanilla-warning: "{prefix}{warn}commands.yml has {hi}ignore-vanilla-permissions: false{warn}. Operators can still run vanilla commands even if you deny them here. Set it to {hi}true{warn}, restart and deop everyone so RankVK alone decides."
+  log-sync-failed: "{prefix}{error}Sync failed: {hi}{reason}"
+  log-backup-failed: "{prefix}{error}Automatic backup failed: {hi}{reason}"
+  log-backup-saved: "{prefix}{add} {main}Backup saved to {hi}{name} {dim}({text}{groups} groups, {users} players{dim})"
+  log-web-failed: "{prefix}{error}Could not start web editor: {hi}{reason}"
+  log-web-error: "{prefix}{error}Web editor error: {hi}{reason}"
+  log-match-on: "{prefix}{add} {main}match-signalVK is on {dim}· {text}players are shared with vkauth in table {hi}{table}"
+  log-match-skipped: "{prefix}{warn}match-signalVK is true but not active: {hi}{reason}{warn}. RankVK keeps its own tables."
+  log-auth-removed: "{prefix}{remove} {error}vkauth deleted {hi}{player}{error}, so RankVK removed {hi}{count} {error}player record(s) too"
+  log-storage-switched: "{prefix}{change} {main}Switched storage to {hi}{method}"
+  log-storage-switch-failed: "{prefix}{error}Could not switch to {hi}{method}{error}, keeping {hi}{current}{error}: {reason}"
+  log-storage-error: "{prefix}{error}Storage error: {hi}{reason}"
+  log-preload-failed: "{prefix}{warn}Could not pre-load {hi}{player}{warn}: {reason}"
+  log-migrated: "{prefix}{main}{who} migrated data to {hi}{type}{main}: {groups} groups, {users} players"
+  log-changes-failed: "{prefix}{error}Could not write changes.log: {hi}{reason}"

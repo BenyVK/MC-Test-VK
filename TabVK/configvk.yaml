@@ -1,0 +1,286 @@
+# =====================================================================
+#   TabVK v1.0.2  -  configvk.yaml   (UltraCraft Theme)
+#   Author : BenyVK
+#   GitHub : https://github.com/BenyVK
+#   Website: https://www.gharri.ir
+# =====================================================================
+# Colors: legacy codes (&a &l &#ff00ff) and MiniMessage both work
+#   MiniMessage example : <gradient:#ff0000:#0000ff>text</gradient>   <rainbow>text</rainbow>
+#   Animated gradient   : <gradient:#ff5555:#5555ff:%phase%>text</gradient>
+#
+# Placeholders (usable everywhere):
+#   %player% %ping% %ping_color% %ping_bars% %online% %max% %tps% %tps_color%
+#   %world% %x% %y% %z% %health% %food% %level% %gamemode%
+#   %ram_used% %ram_max% %time% %date% %group%
+#   %prefix% %suffix% %name_color% %phase% %phase_neg%
+#   %anim_<name>%   -> animations defined in the "animations" section
+#   %icon_xxx% and anything you add in "custom-placeholders"
+#   + every PlaceholderAPI placeholder (if PlaceholderAPI is installed)
+# =====================================================================
+
+settings:
+  header-footer-interval: 5
+  name-interval: 10
+  gradient-cycle-ticks: 60       # slightly faster gradient for UltraCraft vibe
+  timezone: "Europe/Berlin"      # change to your timezone, e.g. "Asia/Tehran"
+  time-format: "HH:mm:ss"
+  date-format: "yyyy/MM/dd"
+  use-placeholderapi: true
+  sort-by-group: true
+
+# Hide "plugin:command" entries (like tabvk:tabvk or minecraft:give) from the
+# command suggestions, so players only see /tabvk. Typing the long form still works.
+#   none = hide nothing
+#   own  = hide only TabVK's (tabvk:...)
+#   all  = hide every namespaced command of every plugin
+hide-namespaced-commands: own
+
+# ---------------------------------------------------------------------
+# Header and footer
+# ---------------------------------------------------------------------
+header-footer:
+  enabled: true
+  header:
+    - ""
+    - "%anim_title%"
+    - "%icon_line%"
+    - "%icon_arrow% &7Welcome <gradient:#b44cff:#00e5ff:%phase%><bold>%player%</bold></gradient> &7to <gradient:#b44cff:#00e5ff>UltraCraft</gradient> %icon_heart%"
+    - "%icon_line%"
+    - ""
+  footer:
+    - ""
+    - "%icon_line%"
+    - "&7%icon_bolt% Ping: %ping_bars% &f%ping%ms   &8|   &7TPS: %tps_color%%tps%"
+    - "&7%icon_crown% Online: &a%online%&7/&c%max%   &8|   &7World: &e%world%"
+    - "&7%icon_sun% &f%time%   &8|   &f%date%"
+    - "%icon_line%"
+    - "%anim_loading%"
+    - "%anim_links%"
+    - ""
+
+# Per-world header/footer (optional). Worlds not listed use the default above.
+worlds:
+  world_nether:
+    header:
+      - ""
+      - "<gradient:#ff0000:#ffaa00:%phase%><bold>✦ UltraCraft Nether ✦</bold></gradient>"
+      - "<gradient:#ff0000:#ffaa00:%phase%>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</gradient>"
+      - ""
+    footer:
+      - ""
+      - "&cWatch out for Ghasts! %icon_skull%"
+      - "&7Ping: %ping_bars% &f%ping%ms   &8|   &7TPS: %tps_color%%tps%"
+      - "%anim_links%"
+      - ""
+  world_the_end:
+    header:
+      - ""
+      - "<gradient:#aa00ff:#ff55ff:%phase%><bold>✦ UltraCraft End ✦</bold></gradient>"
+      - "<gradient:#aa00ff:#ff55ff:%phase%>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</gradient>"
+      - ""
+    footer:
+      - ""
+      - "&5The Dragon is watching... %icon_moon%"
+      - "&7Ping: %ping_bars% &f%ping%ms   &8|   &7TPS: %tps_color%%tps%"
+      - "%anim_links%"
+      - ""
+
+# ---------------------------------------------------------------------
+# Player name in the tab list
+# ---------------------------------------------------------------------
+player-list:
+  enabled: true
+  format: "%prefix%%name_color%%player%%suffix% &8» %ping_color%%ping%ms"
+
+# Prefix/suffix above the player's head (uses scoreboard teams).
+# Keep it false if another plugin already manages teams.
+nametag:
+  enabled: false
+  prefix: "%prefix%"
+  suffix: ""
+
+# ---------------------------------------------------------------------
+# RankVK integration  (ranks come ONLY from RankVK)
+# The group weight sorts the tab list (higher weight = higher in the list).
+# TIP: use legacy codes (&c) or hex (&#ff5555) in prefixes.
+# ---------------------------------------------------------------------
+rankvk:
+  enabled: true
+  auto-space: true
+  default-prefix: "&7"
+  default-suffix: ""
+  name-color: "&f"
+  group-name-colors:
+    owner: "&c"
+    admin: "&6"
+    mod: "&9"
+    helper: "&b"
+    vip: "&e"
+    elite: "&d"
+
+  # -------------------------------------------------------------------
+  # SAMPLE RANKS (UltraCraft style) - copy the commands into the game
+  # chat or console. Nothing here is applied automatically.
+  # -------------------------------------------------------------------
+  #
+  # --- Owner (weight 100) ---
+  #   /rank group owner create
+  #   /rank group owner setweight 100
+  #   /rank group owner setprefix &#ff2a2a&l[UltraOwner]
+  #   /rank group owner setsuffix &c❤
+  #   /rank group owner permission set *
+  #
+  # --- Admin (weight 90) ---
+  #   /rank group admin create
+  #   /rank group admin setweight 90
+  #   /rank group admin setprefix &#ff8c00&l[Admin]
+  #   /rank group admin setsuffix &e⚡
+  #
+  # --- Moderator (weight 80) ---
+  #   /rank group mod create
+  #   /rank group mod setweight 80
+  #   /rank group mod setprefix &9&l[Mod]
+  #   /rank group mod setsuffix &9⚔
+  #
+  # --- Helper (weight 70) ---
+  #   /rank group helper create
+  #   /rank group helper setweight 70
+  #   /rank group helper setprefix &b[Helper]
+  #
+  # --- Elite (weight 60) ---
+  #   /rank group elite create
+  #   /rank group elite setweight 60
+  #   /rank group elite setprefix &#b44cff&l[Elite]
+  #   /rank group elite setsuffix &d✦
+  #
+  # --- VIP (weight 50) ---
+  #   /rank group vip create
+  #   /rank group vip setweight 50
+  #   /rank group vip setprefix &6[VIP]
+  #   /rank group vip setsuffix &e★
+  #
+  # --- Default group ---
+  #   /rank group default setweight 0
+  #   /rank group default setprefix &7
+  #
+  # --- Give a rank to a player ---
+  #   /rank user <player> parent set owner
+  #   /rank user <player> parent add vip
+  #   /rank user <player> parent remove vip
+  #
+  # --- Per-player prefix/suffix ---
+  #   /rank user <player> setprefix &d[Builder]
+  #   /rank user <player> setsuffix none
+  #
+  # --- Inheritance ---
+  #   /rank group admin parent add mod
+  #
+  # --- Useful ---
+  #   /rank listgroups
+  #   /rank group owner info
+  #   /rank user <player> info
+
+# ---------------------------------------------------------------------
+# Players can edit their own prefix/suffix with /tabvk prefix and /tabvk suffix.
+# ---------------------------------------------------------------------
+customization:
+  max-prefix-length: 20
+  max-suffix-length: 20
+  allow-colors-without-permission: false
+
+# ---------------------------------------------------------------------
+# Ping colors and bars (key = maximum ping of that level)
+# ---------------------------------------------------------------------
+ping-levels:
+  '50':   { color: "&a", bars: "&a▂▄▆█" }
+  '100':  { color: "&e", bars: "&a▂▄▆&8█" }
+  '200':  { color: "&6", bars: "&e▂▄&8▆█" }
+  '9999': { color: "&c", bars: "&c▂&8▄▆█" }
+
+# ---------------------------------------------------------------------
+# Animations: %anim_<name>%   (interval = ticks between frames)
+# ---------------------------------------------------------------------
+animations:
+  title:
+    interval: 8
+    frames:
+      - "<gradient:#b44cff:#00e5ff><bold>✦ ULTRACRAFT ✦</bold></gradient>"
+      - "<gradient:#00e5ff:#55ff55><bold>✧ ULTRACRAFT ✧</bold></gradient>"
+      - "<gradient:#55ff55:#ffe14d><bold>✦ ULTRACRAFT ✦</bold></gradient>"
+      - "<gradient:#ffe14d:#ff5555><bold>✧ ULTRACRAFT ✧</bold></gradient>"
+      - "<gradient:#ff5555:#b44cff><bold>✦ ULTRACRAFT ✦</bold></gradient>"
+      - "<rainbow><bold>✧ ULTRACRAFT ✧</bold></rainbow>"
+  loading:
+    interval: 4
+    frames:
+      - "&8[&d▰&8▱▱▱▱▱▱▱&8]"
+      - "&8[&d▰▰&8▱▱▱▱▱▱&8]"
+      - "&8[&d▰▰▰&8▱▱▱▱▱&8]"
+      - "&8[&d▰▰▰▰&8▱▱▱▱&8]"
+      - "&8[&d▰▰▰▰▰&8▱▱▱&8]"
+      - "&8[&d▰▰▰▰▰▰&8▱▱&8]"
+      - "&8[&d▰▰▰▰▰▰▰&8▱&8]"
+      - "&8[&d▰▰▰▰▰▰▰▰&8]"
+      - "&8[&b▰▰▰▰▰▰▰▰&8]"
+      - "&8[&d▰▰▰▰▰▰▰▰&8]"
+  links:
+    interval: 60
+    frames:
+      - "&9%icon_diamond% &bDiscord: &f%discord%%icon_music%"
+      - "&d%icon_diamond% &5Website: &f%website%%icon_music%"
+      - "&d%icon_diamond% &3Telegram: &f%telegram%%icon_music%"
+
+# ---------------------------------------------------------------------
+# Custom placeholders and icons  ->  %<name>%
+# ---------------------------------------------------------------------
+custom-placeholders:
+  server_name: "UltraCraft"
+  discord: "discord.gg/yourlink"
+  website: "www.gharri.ir"
+  telegram: "t.me/UltraCraftIR"
+  icon_line: "<gradient:#b44cff:#00e5ff:%phase%>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</gradient>"
+  icon_heart: "<red>❤</red>"
+  icon_star: "<yellow>★</yellow>"
+  icon_bolt: "<gold>⚡</gold>"
+  icon_arrow: "<light_purple>»</light_purple>"
+  icon_crown: "<gold>♛</gold>"
+  icon_sword: "<gray>⚔</gray>"
+  icon_diamond: "<aqua>◆</aqua>"
+  icon_skull: "<dark_gray>☠</dark_gray>"
+  icon_flower: "<light_purple>✿</light_purple>"
+  icon_music: "<green>♫</green>"
+  icon_sun: "<yellow>☀</yellow>"
+  icon_moon: "<blue>☾</blue>"
+  icon_check: "<green>✔</green>"
+  icon_cross: "<red>✖</red>"
+
+# ---------------------------------------------------------------------
+# Messages
+# ---------------------------------------------------------------------
+messages:
+  prefix: "&8[&dUltra&bCraft&8] "
+  reloaded: "&aConfig reloaded."
+  no-permission: "&cYou don't have permission."
+  player-not-found: "&cPlayer not found."
+  players-only: "&cOnly players can use this."
+  too-long: "&cToo long! Max length: &f%max%"
+  set: "&aYour &f%type% &ais now: &r%value%"
+  set-other: "&a%player%'s &f%type% &ais now: &r%value%"
+  reset: "&aReset to default."
+  toggled-on: "&aHeader/Footer enabled."
+  toggled-off: "&cHeader/Footer disabled."
+  usage: "&cUsage: /tabvk <prefix|suffix> <text|reset>"
+  help:
+    - "&d&lUltraCraft TabVK &7commands:"
+    - "&f/tabvk prefix <text|reset> &7- set your own prefix"
+    - "&f/tabvk suffix <text|reset> &7- set your own suffix"
+    - "&f/tabvk toggle &7- toggle header/footer"
+    - "&f/tabvk about &7- plugin info"
+    - "&f/tabvk set <player> <prefix|suffix> <text|reset> &7- admin"
+    - "&f/tabvk reload &7- admin"
+  about:
+    - "&d&lTabVK &fv%version%"
+    - "&7Author: &fBenyVK"
+    - "&7GitHub: &fgithub.com/BenyVK"
+    - "&7Website: &fwww.gharri.ir"
+    - "&7Telegram: &ft.me/UltraCraftIR"

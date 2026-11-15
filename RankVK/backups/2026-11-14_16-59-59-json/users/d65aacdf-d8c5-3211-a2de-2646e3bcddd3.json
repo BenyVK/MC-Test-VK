@@ -1,0 +1,37 @@
+{
+  "uuid": "d65aacdf-d8c5-3211-a2de-2646e3bcddd3",
+  "name": "BenyVK",
+  "nodes": [
+    {
+      "key": "plugin:bukkit",
+      "value": true,
+      "expiry": 0
+    },
+    {
+      "key": "plugin:minecraft",
+      "value": true,
+      "expiry": 0
+    },
+    {
+      "key": "plugin:paper",
+      "value": true,
+      "expiry": 0
+    },
+    {
+      "key": "plugin:rankvk",
+      "value": true,
+      "expiry": 0
+    },
+    {
+      "key": "plugin:spigot",
+      "value": true,
+      "expiry": 0
+    },
+    {
+      "key": "plugin:vkauth",
+      "value": true,
+      "expiry": 0
+    }
+  ],
+  "prefix": "\u00262\u0026lUC-MC "
+}

@@ -1,0 +1,191 @@
+# Create by BenyVK
+# Telegram https://t.me/i36VK
+# Github : https://Github.com/BenyVK
+
+# ======================================================================
+#  vkauth - configvk.yml
+#  Colors: use & codes (&a, &c, &e ...). Placeholders use {braces}.
+#  Restart the server after editing this file.
+# ======================================================================
+
+storage:
+  # yaml        -> accounts.yml in the plugin folder
+  # mysql       -> MySQL database
+  # mysql,yaml  -> save in BOTH (read from the first one, fallback to the second)
+  # (the MySQL table gets the new last_login column automatically)
+  type: "mysql"
+  # true -> when you change the storage type, accounts of the storage that is
+  #         no longer enabled are copied into the enabled one(s). With
+  #         "mysql,yaml" both are kept in sync at startup.
+  migrate: true
+  # true -> after a successful transfer the old storage is deleted
+  #         (accounts.yml file / MySQL table)
+  delete-old-after-migrate: true
+  mysql:
+    host: "127.0.0.1"
+    port: 3306
+    database: "benyvk"
+    username: "root"
+    password: ""
+    table: "players"
+
+# ----------------------------------------------------------------------
+# online-rankvk  (link with the RankVK plugin)
+#     true  -> when an account is deleted here, the RankVK data of that player
+#              (permissions, prefix, suffix) is deleted too, so nothing stays behind.
+#              Works for /vkauth delete <name> and also when you delete the account by hand
+#              (accounts.yml is read at startup, the MySQL table is checked every link-check-minutes).
+#     false -> vkauth never touches RankVK.
+# RankVK has the matching switch online-authvk in its configvk.yml; both must be true.
+# ----------------------------------------------------------------------
+online-rankvk: true
+link-check-minutes: 5
+
+# ----------------------------------------------------------------------
+# match-signalVK  (one table for vkauth AND RankVK)
+#     false -> vkauth keeps its own table (storage.mysql.table).
+#     true  -> accounts and RankVK data of a player live in ONE row of ONE table (match-table) of the
+#              same MySQL database, e.g. database "minecraft", table "players".
+#              Only turns on when BOTH configvk.yml files say match-signalVK: true, point at the
+#              same database (host, port, database) and have the same match-table. RankVK must use
+#              mysql / mariadb. If something does not match, the reason is printed in the console
+#              and the normal storage is used.
+#              Accounts of the old vkauth table (and accounts.yml) are copied into the shared table once.
+#              With this on, every player has one row under his own uuid.
+# ----------------------------------------------------------------------
+match-signalVK: true
+match-table: players_shared
+
+# ----------------------------------------------------------------------
+# replay-id-account:
+#     true  -> upper/lower case of the name matters. "BenyVK" and "BEnyVK"
+#              are TWO different accounts (each has its own password).
+#     false -> upper/lower case is ignored. "BenyVK" and "BEnyVK" (and every
+#              other spelling) are ONE account with ONE password.
+# When you switch to false, old accounts are found by name (ignoring case)
+# and copied to the shared account automatically. If several spellings were
+# registered before, the oldest registration wins.
+# ----------------------------------------------------------------------
+replay-id-account: false
+
+# ----------------------------------------------------------------------
+# incorrect-installation:
+#     true  -> a player whose name differs from the registered name only by
+#              upper/lower case is KICKED and told which name to use.
+#              Example: registered as "BenyVK", joins as "BEnyVK" ->
+#              kicked with messages.wrong-name-kick ({name} = "BenyVK").
+#              Works with both values of replay-id-account.
+#     false -> no check.
+# ----------------------------------------------------------------------
+incorrect-installation: true
+
+# ----------------------------------------------------------------------
+# auth-map: true  -> unauthenticated players are teleported to pos-auth-start,
+#                    and after login they go back to where they were.
+# Format: "X,Y,Z,A"  (A = yaw / facing angle)
+# ----------------------------------------------------------------------
+auth-map: true
+pos-auth-world: "world"
+pos-auth-start: "39.650,101,-36.451,-90"
+
+# true -> a player who is not logged in yet cannot see any other player
+#         (works together with auth-map, or on its own)
+auth_hide_players: true
+
+# Command labels and aliases that remain usable before login. All other commands
+# are blocked server-side and removed from the command suggestions sent to the player.
+# Namespace qualification is accepted for this plugin (for example vkauth:login).
+auth-commands:
+  - login
+  - log
+  - register
+  - reg
+  - logout
+
+# ----------------------------------------------------------------------
+# start_auth_all: true -> after login/register the player spawns at start_auth_pos
+# start_auth_all_replay (only matters when start_auth_all is true):
+#     true  -> EVERY time the player logs in he spawns at start_auth_pos
+#     false -> only the FIRST time (right after /register). Later logins
+#              return him to where he was.
+# ----------------------------------------------------------------------
+start_auth_all: true
+start_auth_all_replay: true
+start_auth_world: "world"
+start_auth_pos: "114.515,112,-4.695,0"
+
+# ----------------------------------------------------------------------
+# 3D text: a floating text in front of the player while he is logging in /
+# registering. Only that player can see it; it disappears after login.
+# ----------------------------------------------------------------------
+text3d: true
+# \n = new line. Placeholder: {player}
+text3d_note: "&b&lWelcome &f{player}\n&7Please log in or register"
+# size of the text (1.0 = normal, 3.0 = big, 0.5 = small)
+text3d_scale: 1.5
+# how far in front of the player (blocks)
+text3d_distance: 2.5
+# height offset from the player's eyes (blocks, can be negative)
+text3d_height: 0.3
+
+# ----------------------------------------------------------------------
+# TAB list name while logging in / registering.
+# {number} = how many logins / registrations started today (resets every day)
+# ----------------------------------------------------------------------
+tab_names: true
+tab_login_format: "LOGIN_USER_{number}"
+tab_register_format: "REGISTER_USER_{number}"
+
+# ----------------------------------------------------------------------
+# Last login date (shown after /login)
+# Pattern: https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/format/DateTimeFormatter.html
+# time-zone: e.g. "Europe/Berlin", "Asia/Tehran" (empty = server time zone)
+# ----------------------------------------------------------------------
+last-login-format: "yyyy-MM-dd HH:mm:ss"
+time-zone: ""
+
+security:
+  min-password-length: 6
+  max-password-length: 32
+  # wrong passwords before kick (0 = unlimited)
+  max-login-attempts: 3
+  # seconds to log in before being kicked (0 = no limit)
+  login-timeout-seconds: 120
+  # how often the "please login/register" reminder is sent (0 = off)
+  reminder-interval-seconds: 20
+
+messages:
+  prefix: "&8[&bvkauth&8]&r "
+  must-register: "{prefix}&eWelcome &f{player}&e! Register with &f/reg <password> <confirm>"
+  must-login: "{prefix}&eWelcome back &f{player}&e! Log in with &f/login <password>"
+  wait-loading: "{prefix}&7Loading your account, please wait..."
+  register-usage: "{prefix}&cUsage: /register <password> <confirm>"
+  login-usage: "{prefixr}&cUsage: /login <password>"
+  already-registered: "{prefix}&cYou are already registered. Use /login <password>"
+  not-registered: "{prefix}&cYou are not registered. Use /register <password> <confirm>"
+  already-logged-in: "{prefix}&cYou are already logged in."
+  password-mismatch: "{prefix}&cThe two passwords do not match."
+  password-too-short: "{prefix}&cPassword must be at least {min} characters."
+  password-too-long: "{prefix}&cPassword must be at most {max} characters."
+  register-success: "{prefix}&aRegistration successful. You are now logged in!"
+  login-success: "{prefix}&aLogin successful. Welcome!"
+  # {date} = previous login time
+  last-login: "{prefix}&7Last login: &f{date}"
+  # shown instead of {date} when no previous login was recorded
+  last-login-none: "-"
+  wrong-password: "{prefix}&cWrong password. Attempts left: {left}"
+  too-many-attempts: "&cToo many wrong passwords.\n&7Please try again."
+  timeout-kick: "&cYou did not log in within {seconds} seconds."
+  commands-blocked: "{prefix}&cYou must log in first."
+  chat-blocked: "{prefix}&cYou must log in before chatting."
+  logout-kick: "&aYou left the server.\n&7See you soon!"
+  # {name} = the name the account was registered with, {player} = the name the player joined with
+  wrong-name-kick: "&cYour name must be &f{name} &cto log in.\n&7You joined as &f{player}&7. Please change your name and join again."
+  storage-error: "&cCould not load your account. Please try again later."
+  players-only: "This command can only be used by players."
+  no-permission: "{prefix}&cYou do not have permission."
+  admin-usage: "{prefix}&cUsage: /vkauth delete <name>"
+  admin-not-found: "{prefix}&cNo account found for &f{player}&c."
+  admin-deleted: "{prefix}&aDeleted {count} account(s) of &f{player}&a (RankVK data too when online-rankvk is true)."
+  account-deleted-kick: "&cYour account was deleted.\n&7Join again to register a new one."
+
